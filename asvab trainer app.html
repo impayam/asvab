@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ASVAB 35F">
+<title>ASVAB 35F Trainer</title>
+<style>
+  :root{
+    --bg:#14170F; --panel:#1B2016; --panel-alt:#232A1C; --line:#3A4030;
+    --accent:#C9A227; --accent-dim:#8A741E; --sage:#7A8B6F; --rust:#A24936;
+    --text:#EDE8D8; --dim:#9AA08C;
+    --mono: ui-monospace,'SFMono-Regular',Consolas,'Courier New',monospace;
+    --sans: -apple-system,'Segoe UI',Tahoma,Arial,sans-serif;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:radial-gradient(circle at 15% 8%, rgba(201,162,39,.06), transparent 42%), var(--bg);
+    color:var(--text); font-family:var(--sans); min-height:100vh;
+    padding:12px 12px calc(12px + env(safe-area-inset-bottom));
+    padding-top:calc(12px + env(safe-area-inset-top));
+  }
+  .app{max-width:660px;margin:0 auto;}
+  h1,h2,h3{margin:0;}
+
+  /* header */
+  .hdr{border:1px solid var(--line);background:var(--panel);padding:14px 16px;margin-bottom:12px;position:relative;overflow:hidden;}
+  .hdr::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--accent) 0,var(--accent) 4px,transparent 4px);}
+  .kicker{font-family:var(--mono);letter-spacing:2px;font-size:11px;color:var(--accent);}
+  .hdr h1{font-size:19px;margin:6px 0 4px;}
+  .hdr .sub{color:var(--dim);font-size:12px;font-family:var(--mono);}
+  .savebar{display:flex;gap:6px;margin-top:10px;}
+  .savebar button{flex:1;background:var(--panel-alt);border:1px solid var(--line);color:var(--dim);font-family:var(--mono);font-size:10px;padding:7px 4px;cursor:pointer;}
+  .savebar button:hover{border-color:var(--accent);color:var(--accent);}
+  #saveStatus{font-family:var(--mono);font-size:10px;color:var(--sage);margin-top:6px;min-height:12px;}
+
+  /* nav */
+  nav{display:flex;gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:12px;}
+  nav button{flex:1;background:var(--panel);color:var(--dim);border:none;padding:10px 3px;font-family:var(--mono);font-size:10.5px;cursor:pointer;}
+  nav button.active{background:var(--accent);color:#14170F;font-weight:700;}
+  nav button .bdg{color:var(--rust);font-weight:700;}
+  nav button.active .bdg{color:#5c1c10;}
+
+  .view{display:none;} .view.active{display:block;}
+  .btn{border:1px solid var(--line);background:var(--panel-alt);color:var(--text);padding:11px 8px;font-family:var(--mono);font-size:12px;cursor:pointer;flex:1;}
+  .btn:hover{border-color:var(--accent);}
+  .btn.ok{color:var(--sage);border-color:var(--sage);}
+  .btn.no{color:var(--rust);border-color:var(--rust);}
+  .btn.acc{color:var(--accent);border-color:var(--accent-dim);}
+  .btn:disabled{opacity:.35;cursor:not-allowed;}
+  .row{display:flex;gap:8px;}
+
+  .note{background:var(--panel-alt);border:1px solid var(--accent-dim);padding:10px 12px;font-size:12px;color:var(--accent);margin-bottom:12px;line-height:1.6;}
+  .note.warn{border-color:var(--rust);color:#d98a76;}
+
+  /* map */
+  .maplegend{font-family:var(--mono);font-size:11px;color:var(--dim);margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;}
+  .grid30{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;}
+  .daycell{aspect-ratio:1;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);cursor:pointer;position:relative;}
+  .daycell .n{font-size:16px;}
+  .daycell .s{font-size:9px;color:var(--dim);margin-top:2px;}
+  .daycell.locked{opacity:.3;cursor:not-allowed;}
+  .daycell.current{border-color:var(--accent);color:var(--accent);}
+  .daycell.done{border-color:var(--sage);color:var(--sage);}
+  .daycell.done .s{color:var(--sage);}
+  .daycell.exam{background:var(--panel-alt);}
+  .daycell.exam::after{content:"★";position:absolute;top:2px;left:3px;font-size:8px;color:var(--accent);}
+
+  /* study */
+  .stepbar{display:flex;gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:12px;}
+  .stepbar div{flex:1;background:var(--panel);padding:7px 2px;text-align:center;font-family:var(--mono);font-size:9.5px;color:var(--dim);}
+  .stepbar div.on{background:var(--accent-dim);color:#14170F;font-weight:700;}
+  .stepbar div.ok{color:var(--sage);}
+
+  .meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-bottom:8px;}
+  .pbar{height:3px;background:var(--line);margin-bottom:12px;} .pbar>div{height:100%;background:var(--accent);transition:width .25s;}
+
+  .card{background:var(--panel);border:1px solid var(--line);min-height:250px;padding:20px;cursor:pointer;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:relative;}
+  .card::after{content:"◈ لمس کن";position:absolute;bottom:9px;left:0;right:0;font-family:var(--mono);font-size:9.5px;color:var(--dim);}
+  .card .w{font-family:var(--mono);font-size:32px;direction:ltr;}
+  .card .p{font-family:var(--mono);color:var(--accent);font-size:14px;direction:ltr;margin:6px 0 12px;}
+  .spk{background:none;border:1px solid var(--accent-dim);color:var(--accent);width:38px;height:38px;font-size:15px;cursor:pointer;}
+  .card .back{display:none;width:100%;} .card.flip .front{display:none;} .card.flip .back{display:block;}
+  .back .fa{font-size:19px;margin-bottom:10px;}
+  .back .kv{direction:ltr;text-align:left;font-size:12.5px;color:var(--dim);border-top:1px dashed var(--line);padding-top:7px;margin-bottom:5px;}
+  .back .kv b{color:var(--sage);}
+  .back .ex{direction:ltr;text-align:left;font-size:12.5px;font-style:italic;margin-top:9px;line-height:1.5;}
+
+  /* story */
+  .player{background:var(--panel);border:1px solid var(--line);padding:12px;margin-bottom:10px;}
+  .player .main{display:flex;gap:6px;margin-bottom:8px;}
+  .player .main button{flex:1;background:var(--panel-alt);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:13px;padding:12px 4px;cursor:pointer;}
+  .player .main button.big{flex:2;color:var(--accent);border-color:var(--accent-dim);}
+  .player .sub{display:flex;gap:6px;align-items:center;font-family:var(--mono);font-size:10.5px;color:var(--dim);}
+  .player .sub select{background:var(--panel-alt);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:10.5px;padding:5px;}
+  .nowplaying{font-family:var(--mono);font-size:10.5px;color:var(--sage);margin-top:6px;min-height:13px;direction:ltr;text-align:left;}
+  .storybox{background:var(--panel);border:1px solid var(--line);padding:18px;direction:ltr;text-align:left;font-family:Georgia,serif;font-size:16px;line-height:1.9;max-height:48vh;overflow-y:auto;}
+  .storybox p{margin:0 0 14px;padding:4px;}
+  .storybox p.psaid{background:rgba(201,162,39,.07);}
+  .storybox .kw{color:var(--accent);font-weight:700;cursor:pointer;border-bottom:1px dotted var(--accent-dim);}
+  .storybox .kw.spk{background:var(--accent);color:#14170F;}
+
+  /* match */
+  .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .mcol{display:flex;flex-direction:column;gap:7px;}
+  .mi{border:1px solid var(--line);background:var(--panel);padding:11px 9px;font-size:12.5px;cursor:pointer;min-height:44px;display:flex;align-items:center;transition:border-color .15s,color .15s;}
+  .mi.w{direction:ltr;font-family:var(--mono);}
+  .mi.sel{border-color:var(--accent);color:var(--accent);}
+  .mi.bad{border-color:var(--rust);color:var(--rust);}
+  .mi.hit{opacity:.22;pointer-events:none;}
+
+  /* quiz */
+  .q{background:var(--panel);border:1px solid var(--line);padding:16px;margin-bottom:10px;}
+  .q .qt{font-size:14px;margin-bottom:12px;line-height:1.7;}
+  .q .qt .en{direction:ltr;font-family:var(--mono);color:var(--accent);}
+  .opts{display:flex;flex-direction:column;gap:7px;}
+  .opt{border:1px solid var(--line);background:var(--panel-alt);padding:11px;font-size:13px;cursor:pointer;display:flex;gap:8px;align-items:center;}
+  .opt .lt{font-family:var(--mono);color:var(--dim);min-width:18px;}
+  .opt.sel{border-color:var(--accent);}
+  .opt.right{border-color:var(--sage);color:var(--sage);}
+  .opt.wrongpick{border-color:var(--rust);color:var(--rust);}
+  .opt.en{direction:ltr;font-family:var(--mono);}
+  .qexp{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:12px;color:var(--dim);line-height:1.7;display:none;}
+  .qexp.show{display:block;}
+  .qexp b{color:var(--sage);}
+
+  .result{text-align:center;padding:26px 14px;border:1px solid var(--line);background:var(--panel);}
+  .result .pct{font-size:48px;font-family:var(--mono);}
+  .result.pass .pct{color:var(--sage);} .result.fail .pct{color:var(--rust);}
+  .result .msg{margin:10px 0 16px;font-size:14px;line-height:1.7;}
+
+  /* mistakes */
+  .misrow{border:1px solid var(--line);background:var(--panel);padding:10px 12px;display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:7px;}
+  .misrow .l{direction:ltr;font-family:var(--mono);color:var(--accent);font-size:13.5px;}
+  .misrow .r{font-size:12.5px;color:var(--dim);}
+  .misrow .tag{font-family:var(--mono);font-size:9px;color:var(--rust);border:1px solid var(--rust);padding:2px 5px;}
+  .empty{text-align:center;padding:38px 12px;color:var(--dim);font-family:var(--mono);font-size:12.5px;line-height:1.9;}
+
+  /* reference */
+  .refsearch{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--text);padding:11px;font-size:14px;margin-bottom:10px;font-family:var(--sans);}
+  .refsearch:focus{outline:none;border-color:var(--accent);}
+  .reffilter{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+  .reffilter button{background:var(--panel);border:1px solid var(--line);color:var(--dim);font-family:var(--mono);font-size:10px;padding:6px 9px;cursor:pointer;}
+  .reffilter button.on{background:var(--accent);color:#14170F;}
+  .refitem{border:1px solid var(--line);background:var(--panel);padding:12px;margin-bottom:7px;}
+  .refitem .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+  .refitem .w{direction:ltr;font-family:var(--mono);font-size:15px;color:var(--accent);}
+  .refitem .p{direction:ltr;font-family:var(--mono);font-size:11px;color:var(--dim);}
+  .refitem .fa{font-size:13px;margin:6px 0;}
+  .refitem .kv{direction:ltr;text-align:left;font-size:11.5px;color:var(--dim);}
+  .refitem .kv b{color:var(--sage);}
+  .refitem .ex{direction:ltr;text-align:left;font-size:11.5px;font-style:italic;color:var(--text);margin-top:5px;line-height:1.5;}
+  .refitem .dayno{font-family:var(--mono);font-size:9.5px;color:var(--dim);border:1px solid var(--line);padding:2px 5px;}
+  .refspk{background:none;border:1px solid var(--accent-dim);color:var(--accent);font-family:var(--mono);font-size:10px;padding:4px 8px;cursor:pointer;margin-top:7px;}
+
+  .mathref h3{font-size:14px;color:var(--accent);margin:16px 0 8px;font-family:var(--mono);}
+  .mathref table{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:8px;}
+  .mathref td{border:1px solid var(--line);padding:8px;}
+  .mathref td:first-child{direction:ltr;font-family:var(--mono);color:var(--accent);width:42%;}
+  .mathref .f{direction:ltr;font-family:var(--mono);color:var(--sage);}
+
+  footer{text-align:center;color:var(--dim);font-size:10px;margin-top:16px;font-family:var(--mono);line-height:1.8;}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;padding:18px;z-index:50;}
+  .modal.show{display:flex;}
+  .modalbox{background:var(--panel);border:1px solid var(--accent);padding:18px;max-width:440px;width:100%;}
+  .modalbox h3{font-size:15px;margin-bottom:10px;color:var(--accent);}
+  .modalbox textarea{width:100%;height:90px;background:var(--panel-alt);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:10px;padding:8px;direction:ltr;}
+  .modalbox p{font-size:12px;color:var(--dim);line-height:1.7;margin:8px 0;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="hdr">
+    <div class="kicker">ASVAB GT · MOS 35F INTELLIGENCE ANALYST</div>
+    <h1 id="hdrTitle">برنامه ۳۰ روزه واژگان و استدلال</h1>
+    <div class="sub" id="hdrSub">در حال بارگذاری…</div>
+    <div class="savebar">
+      <button id="btnSave">💾 ذخیره</button>
+      <button id="btnExport">⬆ گرفتن کد پشتیبان</button>
+      <button id="btnImport">⬇ بازیابی با کد</button>
+    </div>
+    <div id="saveStatus"></div>
+  </div>
+
+  <nav>
+    <button class="nv active" data-v="map">نقشه</button>
+    <button class="nv" data-v="study">تمرین امروز</button>
+    <button class="nv" data-v="mistakes">اشتباهات <span class="bdg" id="misBdg"></span></button>
+    <button class="nv" data-v="ref">مرجع</button>
+  </nav>
+
+  <!-- MAP -->
+  <section class="view active" id="v-map">
+    <div class="note" id="mapNote"></div>
+    <div class="maplegend">
+      <span style="color:var(--sage)">■ تکمیل‌شده</span>
+      <span style="color:var(--accent)">■ روز فعلی</span>
+      <span>■ قفل</span>
+      <span style="color:var(--accent)">★ روز آزمون</span>
+    </div>
+    <div class="grid30" id="grid30"></div>
+    <div class="note" style="margin-top:12px;">
+      قفل هر روز با گرفتن <b>حداقل ۸۰٪</b> در آزمون پایان همان روز باز می‌شود. آزمون هر روز شامل واژگان همان روز، ۵ لغت مرور و بخش استدلال ریاضی است.
+    </div>
+  </section>
+
+  <!-- STUDY -->
+  <section class="view" id="v-study">
+    <div class="stepbar" id="stepbar">
+      <div data-s="0">۱ فلش‌کارت</div>
+      <div data-s="1">۲ داستان</div>
+      <div data-s="2">۳ تطبیق</div>
+      <div data-s="3">۴ ریاضی</div>
+      <div data-s="4">۵ آزمون</div>
+    </div>
+    <div id="studyBody"></div>
+  </section>
+
+  <!-- MISTAKES -->
+  <section class="view" id="v-mistakes">
+    <div class="note">هر لغتی که اشتباه بزنی خودکار اینجا ثبت می‌شود. با تمرین و پاسخ درست، از لیست حذف می‌شود.</div>
+    <div id="misBody"></div>
+  </section>
+
+  <!-- REFERENCE -->
+  <section class="view" id="v-ref">
+    <input class="refsearch" id="refSearch" placeholder="جستجو در لغات (انگلیسی یا فارسی)…">
+    <div class="reffilter" id="refFilter">
+      <button class="on" data-f="all">همه لغات</button>
+      <button data-f="unlocked">فقط باز شده</button>
+      <button data-f="mistakes">اشتباهاتم</button>
+      <button data-f="math">فرمول‌های ریاضی</button>
+    </div>
+    <div id="refBody"></div>
+  </section>
+
+  <footer>
+    SPACED REPETITION · 30-DAY GT TRACK<br>
+    برای آیفون: Share → Add to Home Screen
+  </footer>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modalbox">
+    <h3 id="modalTitle"></h3>
+    <p id="modalText"></p>
+    <textarea id="modalArea"></textarea>
+    <div class="row" style="margin-top:10px;">
+      <button class="btn acc" id="modalOk">تایید</button>
+      <button class="btn" id="modalCancel">بستن</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════ DATA: 30 DAYS ═══════════════ */
+function W(w,p,fa,syn,ant,ex){return{w,p,fa,syn,ant,ex};}
+
+const DAYS = [
+{d:1,cat:"آکادمیک پایه",words:[
+W("abundant","/əˈbʌndənt/","فراوان، زیاد","plentiful","scarce","The base has an abundant supply of ammunition."),
+W("adjacent","/əˈdʒeɪsənt/","مجاور، هم‌جوار","neighboring","distant","The command post is adjacent to the airfield."),
+W("adversary","/ˈædvərsɛri/","دشمن، حریف","enemy","ally","The analyst studied the adversary's troop movements."),
+W("ambiguous","/æmˈbɪɡjuəs/","مبهم، دوپهلو","unclear","clear","The intercepted message was too ambiguous to act on."),
+W("arbitrary","/ˈɑːrbɪtreri/","دلبخواهی، خودسرانه","random","reasoned","He refused to make an arbitrary decision without data."),
+W("benevolent","/bəˈnevələnt/","نیکوکار، خیرخواه","kind","malicious","The unit ran a benevolent mission for local civilians."),
+W("candid","/ˈkændɪd/","صادقانه، رک","frank","evasive","The officer gave a candid assessment of the risks."),
+W("coherent","/koʊˈhɪrənt/","منسجم، قابل‌فهم","logical","confusing","The report must be coherent so units can act fast."),
+W("compile","/kəmˈpaɪl/","گردآوری کردن","gather","scatter","The analyst had to compile data from many sources."),
+W("comprehensive","/ˌkɑːmprɪˈhensɪv/","جامع، فراگیر","thorough","partial","They prepared a comprehensive report on enemy positions."),
+W("conceal","/kənˈsiːl/","پنهان کردن","hide","reveal","The soldiers used camouflage to conceal their position."),
+W("concise","/kənˈsaɪs/","مختصر و مفید","brief","lengthy","Give a concise briefing before the operation begins."),
+W("credible","/ˈkredəbəl/","قابل‌باور، معتبر","reliable","dubious","The intelligence came from a credible source."),
+W("deficient","/dɪˈfɪʃənt/","ناقص، کمبوددار","lacking","sufficient","The unit's supplies were deficient before resupply."),
+W("deploy","/dɪˈplɔɪ/","مستقر/اعزام کردن","dispatch","withdraw","The battalion was ordered to deploy to the border."),
+W("deteriorate","/dɪˈtɪriəreɪt/","بدتر شدن","worsen","improve","The security situation began to deteriorate rapidly."),
+W("diligent","/ˈdɪlədʒənt/","کوشا، جدی","hardworking","lazy","A diligent analyst double-checks every source."),
+W("discreet","/dɪˈskriːt/","محتاط، محرمانه‌کار","cautious","indiscreet","The agent stayed discreet about the operation."),
+W("eloquent","/ˈeləkwənt/","فصیح، شیوا","articulate","inarticulate","The general gave an eloquent speech before deployment."),
+W("eminent","/ˈemənənt/","برجسته، سرشناس","distinguished","obscure","An eminent strategist advised the command."),
+W("feasible","/ˈfiːzəbəl/","عملی، شدنی","possible","impossible","Is a night operation feasible in this weather?"),
+W("hostile","/ˈhɑːstəl/","خصمانه، دشمن","aggressive","friendly","They entered hostile territory after dark."),
+W("imminent","/ˈɪmənənt/","قریب‌الوقوع","impending","distant","Intelligence suggested an imminent attack."),
+W("impartial","/ɪmˈpɑːrʃəl/","بی‌طرف","unbiased","biased","The investigator remained impartial during the review.")
+],
+story:`Sergeant Reyes sat adjacent to the radio station, reading the latest report. The message was ambiguous, and no one could tell whether it described friendly movement or an adversary patrol. An eminent officer, known for eloquent briefings, was called in.
+
+He began to compile every fragment into one comprehensive file. The data seemed abundant, but the reporting was deficient in key details. "We cannot make an arbitrary call," he said, staying candid about the risk. "Command needs a coherent, concise summary."
+
+His diligent team worked all night, checking every credible source and staying discreet in the field. By dawn a hostile unit had begun to deploy toward the ridge, and the situation started to deteriorate. The threat was imminent, and concealing their intent was no longer feasible. He reminded everyone to stay impartial and benevolent toward the civilians caught between both sides.`,
+math:{topic:"عملیات پایه و ترتیب انجام (PEMDAS)",
+lesson:"ترتیب عملیات: Parentheses → Exponents → Multiplication/Division (چپ به راست) → Addition/Subtraction (چپ به راست). در ASVAB این پایه همه‌ی محاسبات است.",
+qs:[
+{q:"8 + 3 × 4 = ?",o:["44","20","32","14"],a:1,e:"اول ضرب: 3×4=12 سپس 8+12=20"},
+{q:"(6 + 2) × 5 − 10 = ?",o:["30","40","20","25"],a:0,e:"داخل پرانتز: 8، سپس 8×5=40، سپس 40−10=30"},
+{q:"A squad of 24 soldiers is divided into 4 equal teams. How many in each team?",o:["8","6","4","12"],a:1,e:"24 ÷ 4 = 6"},
+{q:"36 ÷ 6 + 2 × 3 = ?",o:["24","12","10","18"],a:1,e:"6 + 6 = 12"}
+]}},
+
+{d:2,cat:"آکادمیک پایه",words:[
+W("indifferent","/ɪnˈdɪfrənt/","بی‌تفاوت","apathetic","concerned","The recruit seemed indifferent to the warning."),
+W("inevitable","/ɪnˈevətəbəl/","اجتناب‌ناپذیر","unavoidable","avoidable","Casualties were inevitable in that terrain."),
+W("infer","/ɪnˈfɜːr/","استنباط کردن","deduce","ignore","Analysts infer intent from movement patterns."),
+W("integrity","/ɪnˈteɡrəti/","درستکاری، یکپارچگی","honesty","corruption","Integrity is essential for an intelligence analyst."),
+W("intricate","/ˈɪntrɪkət/","پیچیده، ظریف","complex","simple","The plan had an intricate timing sequence."),
+W("legitimate","/lɪˈdʒɪtəmət/","قانونی، موجه","valid","fraudulent","The unit had a legitimate reason to search the vehicle."),
+W("meticulous","/məˈtɪkjələs/","دقیق، موشکاف","careful","careless","She kept meticulous records of every transmission."),
+W("mitigate","/ˈmɪtəɡeɪt/","کاهش دادن، تخفیف","reduce","worsen","Armor helps mitigate the risk of injury."),
+W("negligent","/ˈneɡlɪdʒənt/","سهل‌انگار","careless","attentive","The guard was negligent in reporting the breach."),
+W("obscure","/əbˈskjʊr/","مبهم، تاریک؛ پنهان کردن","unclear","obvious","The source of the leak remained obscure."),
+W("obsolete","/ˌɑːbsəˈliːt/","منسوخ، از رده خارج","outdated","current","The radios were obsolete and replaced last year."),
+W("persistent","/pərˈsɪstənt/","سمج، پیوسته","tenacious","yielding","Persistent surveillance revealed the pattern."),
+W("plausible","/ˈplɔːzəbəl/","محتمل، قابل‌قبول","believable","implausible","His account was plausible but unverified."),
+W("precise","/prɪˈsaɪs/","دقیق","exact","vague","We need precise coordinates for the strike."),
+W("prevalent","/ˈprevələnt/","شایع، رایج","widespread","rare","Ambushes were prevalent along that route."),
+W("prudent","/ˈpruːdənt/","محتاط، عاقلانه","wise","reckless","It was prudent to delay the convoy."),
+W("resilient","/rɪˈzɪliənt/","انعطاف‌پذیر، مقاوم","tough","fragile","The network proved resilient under attack."),
+W("scrutinize","/ˈskruːtənaɪz/","موشکافانه بررسی کردن","examine","overlook","Analysts scrutinize satellite imagery daily."),
+W("subsequent","/ˈsʌbsɪkwənt/","بعدی، متعاقب","following","previous","Subsequent reports confirmed the sighting."),
+W("substantial","/səbˈstænʃəl/","قابل‌توجه، اساسی","considerable","minor","There was substantial evidence of movement."),
+W("sufficient","/səˈfɪʃənt/","کافی","adequate","insufficient","We had sufficient fuel for the mission."),
+W("tenacious","/təˈneɪʃəs/","سرسخت، پیگیر","persistent","weak","A tenacious analyst never drops a lead."),
+W("viable","/ˈvaɪəbəl/","قابل اجرا، زنده","workable","unworkable","Only one route remained viable."),
+W("vigilant","/ˈvɪdʒələnt/","هوشیار، مراقب","watchful","careless","Sentries must stay vigilant all night.")
+],
+story:`The new analyst was meticulous, and that made her tenacious in a way the others were not. Where a negligent eye would skip an obscure detail, she would scrutinize it until a plausible pattern appeared.
+
+The old sensors were obsolete, so precise data was hard to get. Ambush reports were prevalent along the eastern road, and the team agreed it was prudent to mitigate the risk before any convoy moved. Her commander was indifferent at first, but subsequent reports gave substantial support to her reading.
+
+She could infer intent from an intricate sequence of small movements. A legitimate warning went out. The route was no longer viable, and the change was inevitable. The unit stayed vigilant, the network proved resilient, and her persistent work — and her integrity — kept everyone alive.`,
+math:{topic:"کسر، اعشار و درصد",
+lesson:"تبدیل: کسر → اعشار (تقسیم صورت بر مخرج). اعشار → درصد (×۱۰۰). درصد از یک عدد = عدد × (درصد ÷ ۱۰۰).",
+qs:[
+{q:"What is 25% of 80?",o:["20","25","16","40"],a:0,e:"80 × 0.25 = 20"},
+{q:"Convert 3/4 to a percent.",o:["34%","43%","75%","70%"],a:2,e:"3 ÷ 4 = 0.75 = 75%"},
+{q:"A unit of 200 soldiers has 15% on leave. How many are on leave?",o:["15","20","30","45"],a:2,e:"200 × 0.15 = 30"},
+{q:"0.6 equals which fraction?",o:["6/10","6/100","1/6","3/10"],a:0,e:"0.6 = 6/10 = 3/5"}
+]}},
+
+{d:3,cat:"آکادمیک پایه",words:[
+W("accelerate","/əkˈseləreɪt/","شتاب دادن","speed up","decelerate","They accelerated the training schedule."),
+W("acquire","/əˈkwaɪər/","به دست آوردن","obtain","lose","We acquired new night-vision equipment."),
+W("adhere","/ədˈhɪr/","پایبند بودن، چسبیدن","comply","deviate","All units must adhere to the rules of engagement."),
+W("advocate","/ˈædvəkeɪt/","طرفداری کردن","support","oppose","He advocated a defensive posture."),
+W("allocate","/ˈæləkeɪt/","تخصیص دادن","assign","withhold","Command allocated three trucks to the mission."),
+W("anticipate","/ænˈtɪsəpeɪt/","پیش‌بینی کردن","expect","overlook","We anticipate movement before dawn."),
+W("assess","/əˈses/","ارزیابی کردن","evaluate","ignore","Assess the threat before you report it."),
+W("comply","/kəmˈplaɪ/","اطاعت کردن","obey","defy","The driver failed to comply with the order."),
+W("confine","/kənˈfaɪn/","محدود کردن","restrict","release","Keep the search confined to this sector."),
+W("consensus","/kənˈsensəs/","اجماع، توافق","agreement","disagreement","The staff reached a consensus on the plan."),
+W("constrain","/kənˈstreɪn/","محدود کردن","limit","free","Fuel shortages constrained the operation."),
+W("contradict","/ˌkɑːntrəˈdɪkt/","نقض کردن، رد کردن","oppose","confirm","The second report contradicted the first."),
+W("derive","/dɪˈraɪv/","استخراج کردن، نتیجه گرفتن","obtain","originate","We derive the estimate from signal traffic."),
+W("distinct","/dɪˈstɪŋkt/","متمایز، مشخص","separate","identical","Two distinct groups were observed."),
+W("diverse","/daɪˈvɜːrs/","متنوع","varied","uniform","The team had diverse language skills."),
+W("emerge","/ɪˈmɜːrdʒ/","پدیدار شدن","appear","vanish","A new threat emerged in the north."),
+W("enhance","/ɪnˈhæns/","تقویت کردن، بهبود","improve","diminish","Better optics enhance target detection."),
+W("explicit","/ɪkˈsplɪsɪt/","صریح، روشن","clear","implicit","The order was explicit about timing."),
+W("facilitate","/fəˈsɪləteɪt/","تسهیل کردن","ease","hinder","The interpreter facilitated the meeting."),
+W("implement","/ˈɪmpləment/","اجرا کردن","execute","abandon","The new protocol was implemented today."),
+W("initiate","/ɪˈnɪʃieɪt/","آغاز کردن","begin","conclude","Initiate the sweep at 0400."),
+W("presume","/prɪˈzuːm/","فرض کردن","assume","verify","Do not presume the area is clear."),
+W("suspend","/səˈspend/","معلق کردن، متوقف","halt","resume","Flights were suspended due to weather."),
+W("verify","/ˈverəfaɪ/","تأیید کردن، راستی‌آزمایی","confirm","doubt","Verify the source before reporting.")
+],
+story:`Before dawn the staff met to assess a new problem. A second report contradicted the first, and no one could yet verify which was right. The captain was explicit: no one would presume anything.
+
+They allocated two teams and initiated a sweep of the sector, confining the search to a narrow band. Fuel shortages constrained the plan, and bad weather forced them to suspend air support, but the interpreter facilitated contact with local guides, which enhanced their picture of the ground.
+
+By midday two distinct groups had emerged. The intelligence cell derived a clear estimate from diverse sources and anticipated movement by nightfall. The commander advocated a defensive posture, the staff reached a consensus, and the order was implemented at once. Every unit adhered to the rules of engagement and complied without delay.`,
+math:{topic:"نسبت و تناسب",
+lesson:"نسبت (ratio) رابطه دو کمیت است: a:b. تناسب یعنی دو نسبت برابرند: a/b = c/d، و با ضرب متقاطع حل می‌شود: a×d = b×c.",
+qs:[
+{q:"If 3 trucks carry 45 soldiers, how many soldiers can 5 trucks carry?",o:["60","75","70","90"],a:1,e:"45÷3=15 هر کامیون، 15×5=75"},
+{q:"The ratio of officers to enlisted is 1:8. If there are 72 enlisted, how many officers?",o:["8","9","12","6"],a:1,e:"72 ÷ 8 = 9"},
+{q:"Solve: 4/6 = x/18",o:["10","12","14","8"],a:1,e:"ضرب متقاطع: 4×18=6x → 72=6x → x=12"},
+{q:"A map scale is 1 inch = 5 miles. How many miles is 7 inches?",o:["25","30","35","40"],a:2,e:"7 × 5 = 35"}
+]}},
+
+{d:4,cat:"آکادمیک پایه",words:[
+W("abstract","/ˈæbstrækt/","انتزاعی، خلاصه","theoretical","concrete","The briefing was too abstract for field use."),
+W("adequate","/ˈædɪkwət/","کافی، مناسب","sufficient","inadequate","The cover was adequate for the night."),
+W("adjacent-post","/əˈdʒeɪsənt poʊst/","پاسگاه مجاور","nearby post","remote post","The adjacent-post radio relayed the alert."),
+W("aggregate","/ˈæɡrɪɡət/","مجموع، کل","total","individual","The aggregate of all reports showed a trend."),
+W("alleviate","/əˈliːvieɪt/","تسکین دادن، کم کردن","relieve","aggravate","Medical supplies alleviated the suffering."),
+W("assertion","/əˈsɜːrʃən/","ادعا، اظهار","claim","denial","His assertion lacked supporting evidence."),
+W("cease","/siːs/","متوقف کردن","stop","continue","All fire will cease at 1800."),
+W("competent","/ˈkɑːmpətənt/","شایسته، توانا","capable","incompetent","She is a competent signals analyst."),
+W("compensate","/ˈkɑːmpənseɪt/","جبران کردن","offset","deprive","Extra fuel compensated for the detour."),
+W("compromise","/ˈkɑːmprəmaɪz/","به خطر انداختن؛ سازش","endanger","secure","A leak could compromise the operation."),
+W("consecutive","/kənˈsekjətɪv/","پیاپی، متوالی","successive","random","Three consecutive nights of surveillance."),
+W("deviate","/ˈdiːvieɪt/","منحرف شدن","stray","conform","Do not deviate from the route."),
+W("discrepancy","/dɪˈskrepənsi/","مغایرت، اختلاف","inconsistency","agreement","There was a discrepancy in the timestamps."),
+W("dispatch","/dɪˈspætʃ/","اعزام کردن؛ پیام","send","recall","Dispatch a team to the checkpoint."),
+W("diminish","/dɪˈmɪnɪʃ/","کاهش یافتن","decrease","increase","Enemy activity diminished after the raid."),
+W("exempt","/ɪɡˈzempt/","معاف","excused","liable","Medical staff were exempt from the drill."),
+W("exert","/ɪɡˈzɜːrt/","اعمال کردن، به‌کار بردن","apply","withhold","The unit exerted pressure on the flank."),
+W("impede","/ɪmˈpiːd/","مانع شدن","obstruct","assist","Heavy rain impeded the advance."),
+W("incentive","/ɪnˈsentɪv/","انگیزه، مشوق","motivation","deterrent","Promotion is a strong incentive."),
+W("intercept","/ˌɪntərˈsept/","رهگیری کردن","catch","release","We intercepted an enemy transmission."),
+W("magnitude","/ˈmæɡnɪtuːd/","بزرگی، اندازه","scale","insignificance","No one grasped the magnitude of the threat."),
+W("preliminary","/prɪˈlɪməneri/","مقدماتی، اولیه","initial","final","This is only a preliminary assessment."),
+W("supplement","/ˈsʌpləment/","تکمیل کردن؛ مکمل","add to","reduce","Drones supplement ground reconnaissance."),
+W("terminate","/ˈtɜːrməneɪt/","خاتمه دادن","end","begin","Command terminated the operation early.")
+],
+story:`The preliminary assessment was too abstract. It rested on a single assertion with no evidence, and a discrepancy in the timestamps had gone unnoticed for three consecutive days.
+
+The team intercepted a new transmission, and the aggregate of everything they had finally showed the magnitude of the problem. A leak could compromise the whole operation. Heavy rain impeded movement, but extra fuel compensated for the detour, and drones were dispatched to supplement ground reconnaissance.
+
+The captain was competent enough to know when to exert pressure and when to hold. He told them not to deviate from the route and not to exert force without cause. Their cover was adequate, and enemy activity diminished by dawn. Medical supplies alleviated the worst of it. When the risk no longer justified the mission, he ordered them to cease movement and terminate the patrol.`,
+math:{topic:"معادلات یک‌مجهولی",
+lesson:"برای حل x، عملیات معکوس انجام بده تا x تنها بماند. هر کاری روی یک طرف کردی، روی طرف دیگر هم انجام بده.",
+qs:[
+{q:"Solve: 3x + 7 = 22",o:["3","5","7","15"],a:1,e:"3x = 15 → x = 5"},
+{q:"Solve: x/4 − 2 = 6",o:["16","24","32","28"],a:2,e:"x/4 = 8 → x = 32"},
+{q:"A convoy travels 240 miles in 4 hours. What is the average speed?",o:["50 mph","55 mph","60 mph","70 mph"],a:2,e:"240 ÷ 4 = 60 mph"},
+{q:"Solve: 5(x − 2) = 25",o:["5","7","3","9"],a:1,e:"x − 2 = 5 → x = 7"}
+]}},
+
+{d:5,cat:"آکادمیک پایه",words:[
+W("apprehend","/ˌæprɪˈhend/","دستگیر کردن؛ درک کردن","capture","release","They apprehended the suspect at the gate."),
+W("articulate","/ɑːrˈtɪkjəleɪt/","به‌روشنی بیان کردن","express","mumble","He articulated the plan in three sentences."),
+W("ascertain","/ˌæsərˈteɪn/","معلوم کردن، پی بردن","determine","guess","Ascertain the enemy's strength first."),
+W("augment","/ɔːɡˈment/","افزودن، تقویت کردن","increase","reduce","Reserves augmented the front line."),
+W("circumvent","/ˌsɜːrkəmˈvent/","دور زدن، طفره رفتن","bypass","confront","They circumvented the roadblock."),
+W("clandestine","/klænˈdestɪn/","مخفیانه، سری","secret","open","A clandestine meeting took place at night."),
+W("cohesion","/koʊˈhiːʒən/","انسجام، همبستگی","unity","division","Unit cohesion wins battles."),
+W("commence","/kəˈmens/","آغاز کردن","begin","conclude","The operation will commence at 0500."),
+W("conducive","/kənˈduːsɪv/","مساعد، کمک‌کننده","favorable","hindering","The weather was not conducive to flight."),
+W("contingency","/kənˈtɪndʒənsi/","پیشامد احتمالی، طرح جایگزین","backup plan","certainty","Every mission needs a contingency plan."),
+W("covert","/ˈkoʊvɜːrt/","پنهانی، سری","secret","overt","A covert team crossed the border."),
+W("decisive","/dɪˈsaɪsɪv/","قاطع، تعیین‌کننده","conclusive","indecisive","His decisive action saved the platoon."),
+W("designate","/ˈdezɪɡneɪt/","تعیین کردن، نامگذاری","appoint","dismiss","Designate a rally point before moving."),
+W("disseminate","/dɪˈsemɪneɪt/","توزیع/پخش کردن","distribute","withhold","Disseminate the report to all units."),
+W("elicit","/ɪˈlɪsɪt/","بیرون کشیدن، استخراج کردن","draw out","suppress","The interview elicited useful details."),
+W("expedite","/ˈekspədaɪt/","تسریع کردن","speed up","delay","Expedite the resupply request."),
+W("formidable","/ˈfɔːrmɪdəbəl/","مهیب، سهمگین","daunting","weak","They faced a formidable defensive line."),
+W("imperative","/ɪmˈperətɪv/","ضروری، حتمی","essential","optional","Secrecy is imperative for this mission."),
+W("jeopardize","/ˈdʒepərdaɪz/","به خطر انداختن","endanger","protect","Careless talk can jeopardize lives."),
+W("proximity","/prɑːkˈsɪməti/","نزدیکی","nearness","distance","Their proximity to the border was a concern."),
+W("relinquish","/rɪˈlɪŋkwɪʃ/","واگذار کردن، رها کردن","surrender","retain","They relinquished control of the outpost."),
+W("stringent","/ˈstrɪndʒənt/","سخت‌گیرانه، شدید","strict","lenient","Stringent security rules applied on base."),
+W("vulnerable","/ˈvʌlnərəbəl/","آسیب‌پذیر","exposed","protected","The convoy was vulnerable at the bridge."),
+W("warrant","/ˈwɔːrənt/","توجیه کردن، ایجاب کردن","justify","forbid","The evidence did not warrant an arrest.")
+],
+story:`Secrecy was imperative. A covert team would commence movement at 0500, and a clandestine contact had already been designated as their guide.
+
+The captain articulated the risk clearly: their proximity to the border made them vulnerable, and the enemy's defensive line was formidable. Stringent rules applied — nothing careless that could jeopardize the operation. If the weather turned and became less conducive to flight, they had a contingency plan.
+
+They would circumvent the main roadblock rather than confront it. Reserves would augment the flank. The intelligence cell had to ascertain enemy strength, elicit what they could from local sources, and disseminate it fast. Nothing so far warranted a delay, so the request to expedite resupply went out.
+
+Unit cohesion held. When the moment came, decisive action mattered more than any plan, and no one had to relinquish an inch of ground.`,
+math:{topic:"محیط، مساحت و حجم",
+lesson:"مستطیل: مساحت=طول×عرض، محیط=۲(طول+عرض). مثلث: مساحت=½×قاعده×ارتفاع. دایره: مساحت=πr². مکعب مستطیل: حجم=طول×عرض×ارتفاع.",
+qs:[
+{q:"A rectangular field is 30 m by 20 m. What is its area?",o:["50 m²","100 m²","600 m²","500 m²"],a:2,e:"30 × 20 = 600 m²"},
+{q:"What is the perimeter of a rectangle 12 ft by 8 ft?",o:["20 ft","40 ft","96 ft","32 ft"],a:1,e:"2(12+8) = 2×20 = 40 ft"},
+{q:"A triangle has base 10 in and height 6 in. Area?",o:["60 in²","30 in²","16 in²","20 in²"],a:1,e:"½ × 10 × 6 = 30 in²"},
+{q:"A crate is 3 ft × 2 ft × 4 ft. What is its volume?",o:["9 ft³","24 ft³","18 ft³","12 ft³"],a:1,e:"3 × 2 × 4 = 24 ft³"}
+]}},
+
+{d:6,cat:"آکادمیک پایه",words:[
+W("accumulate","/əˈkjuːmjəleɪt/","انباشته شدن","gather","disperse","Evidence accumulated over several weeks."),
+W("ambivalent","/æmˈbɪvələnt/","دودل، دوسویه","uncertain","decided","He was ambivalent about the transfer."),
+W("apprehensive","/ˌæprɪˈhensɪv/","نگران، دلواپس","anxious","confident","The recruits were apprehensive before the jump."),
+W("belligerent","/bəˈlɪdʒərənt/","ستیزه‌جو، جنگ‌طلب","aggressive","peaceful","A belligerent crowd blocked the road."),
+W("collaborate","/kəˈlæbəreɪt/","همکاری کردن","cooperate","compete","Analysts collaborate across agencies."),
+W("conspicuous","/kənˈspɪkjuəs/","آشکار، جلب‌توجه‌کننده","noticeable","hidden","Avoid conspicuous movement in daylight."),
+W("culminate","/ˈkʌlməneɪt/","به اوج رسیدن، ختم شدن","climax","begin","The training culminated in a live exercise."),
+W("depict","/dɪˈpɪkt/","به تصویر کشیدن","portray","distort","The map depicts enemy positions."),
+W("disparity","/dɪˈspærəti/","نابرابری، اختلاف","gap","equality","There was a disparity in equipment quality."),
+W("empirical","/ɪmˈpɪrɪkəl/","تجربی، مبتنی بر مشاهده","observed","theoretical","The estimate rests on empirical data."),
+W("exacerbate","/ɪɡˈzæsərbeɪt/","تشدید کردن","worsen","relieve","Delays exacerbated the supply problem."),
+W("exploit","/ɪkˈsplɔɪt/","بهره‌برداری کردن","utilize","neglect","Exploit the gap in their defenses."),
+W("hypothesis","/haɪˈpɑːθəsɪs/","فرضیه","theory","fact","Our hypothesis is that they will withdraw."),
+W("indigenous","/ɪnˈdɪdʒənəs/","بومی، محلی","native","foreign","Indigenous guides know the terrain."),
+W("inherent","/ɪnˈhɪrənt/","ذاتی، درونی","intrinsic","acquired","There is inherent risk in night operations."),
+W("nominal","/ˈnɑːmɪnəl/","اسمی، ناچیز","token","substantial","Casualties were nominal in that engagement."),
+W("paramount","/ˈpærəmaʊnt/","برترین، مهم‌ترین","supreme","minor","Force protection is paramount."),
+W("pragmatic","/præɡˈmætɪk/","عمل‌گرا، واقع‌بین","practical","idealistic","A pragmatic commander adapts fast."),
+W("proliferate","/prəˈlɪfəreɪt/","تکثیر شدن، زیاد شدن","multiply","decrease","Small drones proliferated on the battlefield."),
+W("reconcile","/ˈrekənsaɪl/","آشتی دادن، تطبیق دادن","resolve","conflict","We must reconcile the two reports."),
+W("rudimentary","/ˌruːdəˈmentəri/","ابتدایی، مقدماتی","basic","advanced","They had only rudimentary equipment."),
+W("scrupulous","/ˈskruːpjələs/","بسیار دقیق و باوجدان","thorough","careless","Keep scrupulous records of all contacts."),
+W("transparent","/trænsˈpærənt/","شفاف، آشکار","clear","opaque","The process must be transparent to auditors."),
+W("unprecedented","/ʌnˈpresɪdentɪd/","بی‌سابقه","unmatched","common","The attack was unprecedented in scale.")
+],
+story:`Evidence had accumulated for weeks, and the disparity between two reports was impossible to ignore. The analysts had to reconcile them.
+
+Their hypothesis rested on empirical data, not guesswork, and they were scrupulous about every source. Small drones had proliferated across the sector, and delays in resupply only exacerbated the problem. Local commanders were apprehensive; one was openly belligerent about the risk.
+
+Indigenous guides knew the terrain, and the team collaborated closely with them. Their equipment was rudimentary, but a pragmatic plan mattered more than good gear. Force protection was paramount, so they avoided conspicuous movement and exploited a gap in the enemy line.
+
+The inherent risk never went away. The operation culminated at dawn with unprecedented speed, casualties were nominal, and the after-action report was transparent about everything that went wrong.`,
+math:{topic:"میانگین، میانه و مد",
+lesson:"میانگین (mean) = مجموع ÷ تعداد. میانه (median) = عدد وسط پس از مرتب‌سازی. مد (mode) = عددی که بیشترین تکرار را دارد.",
+qs:[
+{q:"Find the average of 12, 18, 24, and 26.",o:["18","20","22","24"],a:1,e:"مجموع=80، 80÷4=20"},
+{q:"What is the median of 5, 9, 3, 11, 7?",o:["5","7","9","11"],a:1,e:"مرتب: 3,5,7,9,11 → وسط = 7"},
+{q:"A soldier scores 80, 90, and 85. What score on a fourth test gives an average of 85?",o:["80","85","90","95"],a:1,e:"مجموع لازم=340، 340−255=85"},
+{q:"What is the mode of 4, 7, 4, 9, 4, 7?",o:["4","7","9","6"],a:0,e:"عدد 4 سه بار تکرار شده"}
+]}},
+
+{d:7,cat:"آزمون هفته ۱",words:[
+W("assiduous","/əˈsɪdʒuəs/","پرکار، سختکوش","diligent","idle","An assiduous analyst reviews every file."),
+W("cursory","/ˈkɜːrsəri/","سرسری، شتاب‌زده","hasty","thorough","A cursory glance missed the detail."),
+W("dubious","/ˈduːbiəs/","مشکوک، تردیدآمیز","doubtful","certain","The claim came from a dubious source."),
+W("expedient","/ɪkˈspiːdiənt/","مصلحتی، به‌صرفه","practical","impractical","It was expedient to reroute the convoy."),
+W("innocuous","/ɪˈnɑːkjuəs/","بی‌ضرر، بی‌خطر","harmless","harmful","The package proved innocuous."),
+W("lucid","/ˈluːsɪd/","روشن، شفاف","clear","confusing","He gave a lucid explanation of the plan."),
+W("mundane","/mʌnˈdeɪn/","عادی، پیش‌پاافتاده","ordinary","extraordinary","Most of the work is mundane record-keeping."),
+W("nuance","/ˈnuːɑːns/","ظرافت، تفاوت جزئی","subtlety","obviousness","Language nuance matters in translation."),
+W("ostensible","/ɑːˈstensəbəl/","ظاهری، صوری","apparent","actual","The ostensible reason was resupply."),
+W("redundant","/rɪˈdʌndənt/","اضافی، زائد","superfluous","essential","The second radio is redundant but useful."),
+W("tacit","/ˈtæsɪt/","ضمنی، نانوشته","implied","explicit","There was a tacit agreement to hold fire."),
+W("vindicate","/ˈvɪndɪkeɪt/","تبرئه کردن، اثبات کردن","justify","condemn","The evidence vindicated his judgment.")
+],
+story:`Most of the work was mundane, and a cursory glance would call it redundant. But an assiduous analyst knows that nuance hides in ordinary files.
+
+The claim came from a dubious source, and the ostensible reason for the movement was resupply. It seemed innocuous. There was a tacit agreement in the room to let it go, but she gave a lucid argument for a second look, even if it was less expedient.
+
+Two days later the evidence vindicated her completely.`,
+math:{topic:"مرور هفته ۱ — همه مباحث",
+lesson:"مرور: ترتیب عملیات، درصد، نسبت، معادله، مساحت، میانگین.",
+qs:[
+{q:"12 + 6 ÷ 3 × 2 = ?",o:["12","16","20","10"],a:1,e:"6÷3=2، 2×2=4، 12+4=16"},
+{q:"30% of 150 = ?",o:["30","45","50","60"],a:1,e:"150 × 0.30 = 45"},
+{q:"Solve: 2x − 9 = 11",o:["10","8","11","20"],a:0,e:"2x = 20 → x = 10"},
+{q:"Average of 15, 25, 35, 45 = ?",o:["25","30","35","40"],a:1,e:"مجموع=120، 120÷4=30"},
+{q:"If 4 radios cost $320, what do 7 cost?",o:["$480","$540","$560","$600"],a:2,e:"320÷4=80، 80×7=560"}
+]}}
+];
+
+/* هفته‌های ۲ تا ۴ (روزهای ۸ تا ۳۰) در نسخه بعدی افزوده می‌شوند */
+const TOTAL_DAYS = 30;
+
+const MATH_REF = [
+ {t:"ترتیب عملیات (PEMDAS)", rows:[["Parentheses → Exponents","اول پرانتز، بعد توان"],["Multiply / Divide","از چپ به راست"],["Add / Subtract","از چپ به راست"]]},
+ {t:"درصد و کسر", rows:[["x% of N = N × (x/100)","درصد از یک عدد"],["fraction → decimal","صورت ÷ مخرج"],["decimal → percent","× 100"],["% increase = (new−old)/old ×100","درصد افزایش"]]},
+ {t:"نسبت و تناسب", rows:[["a/b = c/d → a×d = b×c","ضرب متقاطع"],["unit rate = total ÷ count","نرخ واحد"]]},
+ {t:"معادله یک‌مجهولی", rows:[["ax + b = c","x = (c − b) / a"],["a(x + b) = c","اول پخش کن، بعد حل کن"]]},
+ {t:"هندسه", rows:[["Rectangle area","L × W"],["Rectangle perimeter","2(L + W)"],["Triangle area","½ × base × height"],["Circle area","π r²"],["Circle circumference","2π r"],["Box volume","L × W × H"]]},
+ {t:"آمار", rows:[["Mean","مجموع ÷ تعداد"],["Median","عدد وسط پس از مرتب‌سازی"],["Mode","پرتکرارترین عدد"]]},
+ {t:"سرعت، مسافت، زمان", rows:[["Distance = Rate × Time","d = r × t"],["Rate = Distance ÷ Time","r = d / t"],["Time = Distance ÷ Rate","t = d / r"]]}
+];
+
+/* ═══════════════ STATE + PERSISTENCE ═══════════════ */
+const DEFAULT_STATE = {unlocked:1, completed:{}, scores:{}, mistakes:{}, lastDay:1};
+let S = JSON.parse(JSON.stringify(DEFAULT_STATE));
+const KEY = 'asvab35f:v1';
+
+async function loadState(){
+  try{
+    const r = await window.storage.get(KEY);
+    if (r && r.value){ S = Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE)), JSON.parse(r.value)); }
+    status('پیشرفت بارگذاری شد');
+  }catch(e){ status('شروع تازه — پیشرفتی ذخیره نشده'); }
+  renderAll();
+}
+async function saveState(silent){
+  try{
+    await window.storage.set(KEY, JSON.stringify(S));
+    if(!silent) status('ذخیره شد ✓');
+  }catch(e){ if(!silent) status('ذخیره ناموفق — از کد پشتیبان استفاده کن'); }
+}
+function status(t){ const el=document.getElementById('saveStatus'); el.textContent=t; setTimeout(()=>{if(el.textContent===t)el.textContent='';},2600); }
+
+/* ═══════════════ TTS + PLAYER ═══════════════ */
+let voices=[]; const loadV=()=>voices=speechSynthesis.getVoices(); loadV();
+if(speechSynthesis.onvoiceschanged!==undefined) speechSynthesis.onvoiceschanged=loadV;
+const enVoice=()=>voices.find(v=>v.lang==='en-US')||voices.find(v=>v.lang&&v.lang.startsWith('en'))||null;
+
+function say(text, rate){
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=rate||.95;
+    const v=enVoice(); if(v)u.voice=v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* Story player: paragraph queue, pause/resume, word click does NOT kill playback */
+const P = {paras:[], idx:0, playing:false, paused:false, rate:1, loop:false};
+
+function playerSpeakPara(i){
+  if(i>=P.paras.length){
+    if(P.loop){ P.idx=0; playerSpeakPara(0); return; }
+    P.playing=false; P.paused=false; updPlayerUI(); markPara(-1); return;
+  }
+  P.idx=i; markPara(i);
+  const u=new SpeechSynthesisUtterance(P.paras[i].text);
+  u.lang='en-US'; u.rate=P.rate;
+  const v=enVoice(); if(v)u.voice=v;
+  u.onend=()=>{ if(P.playing && !P.paused) playerSpeakPara(i+1); };
+  speechSynthesis.speak(u);
+  updPlayerUI();
+}
+function markPara(i){
+  document.querySelectorAll('.storybox p').forEach((p,k)=>p.classList.toggle('psaid',k===i));
+  const np=document.getElementById('nowPlaying');
+  if(np) np.textContent = i>=0 ? `▶ paragraph ${i+1} / ${P.paras.length}` : '';
+}
+function playerPlay(){
+  speechSynthesis.cancel();
+  P.playing=true; P.paused=false; playerSpeakPara(P.idx);
+}
+function playerPause(){
+  if(!P.playing) return;
+  P.paused=true; speechSynthesis.cancel(); updPlayerUI();
+}
+function playerResume(){ if(P.playing&&P.paused){ P.paused=false; playerSpeakPara(P.idx);} }
+function playerStop(){ P.playing=false; P.paused=false; speechSynthesis.cancel(); markPara(-1); updPlayerUI(); }
+function playerJump(delta){
+  const t=Math.max(0,Math.min(P.paras.length-1,P.idx+delta));
+  speechSynthesis.cancel(); P.idx=t;
+  if(P.playing&&!P.paused) playerSpeakPara(t); else markPara(t);
+  updPlayerUI();
+}
+/* speak a single word WITHOUT destroying story position */
+function sayWordSafe(word){
+  const wasPlaying = P.playing && !P.paused;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(word);
+  u.lang='en-US'; u.rate=.85;
+  const v=enVoice(); if(v)u.voice=v;
+  u.onend=()=>{ if(wasPlaying) playerSpeakPara(P.idx); };
+  speechSynthesis.speak(u);
+}
+function updPlayerUI(){
+  const b=document.getElementById('btnPlayPause');
+  if(!b) return;
+  b.textContent = (P.playing && !P.paused) ? '⏸ مکث' : (P.paused ? '▶ ادامه' : '▶ پخش');
+}
+
+/* ═══════════════ NAV ═══════════════ */
+document.querySelectorAll('.nv').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.nv').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById('v-'+b.dataset.v).classList.add('active');
+    playerStop();
+    if(b.dataset.v==='mistakes') renderMistakes();
+    if(b.dataset.v==='ref') renderRef();
+    if(b.dataset.v==='study') renderStudy();
+    if(b.dataset.v==='map') renderMap();
+    window.scrollTo(0,0);
+  });
+});
+function goto(v){ document.querySelector(`.nv[data-v="${v}"]`).click(); }
+
+/* ═══════════════ MISTAKES ═══════════════ */
+function addMis(word, day){ S.mistakes[word]={day, at:Date.now()}; updBdg(); saveState(true); }
+function delMis(word){ delete S.mistakes[word]; updBdg(); saveState(true); }
+function updBdg(){
+  const n=Object.keys(S.mistakes).length;
+  document.getElementById('misBdg').textContent = n?`(${n})`:'';
+}
+function findWord(w){
+  for(const d of DAYS){ const f=d.words.find(x=>x.w===w); if(f) return {item:f, day:d.d}; }
+  return null;
+}
+function renderMistakes(){
+  updBdg();
+  const keys=Object.keys(S.mistakes);
+  const el=document.getElementById('misBody');
+  if(!keys.length){ el.innerHTML=`<div class="empty">هنوز اشتباهی ثبت نشده.<br>هر لغتی که در فلش‌کارت، تطبیق یا آزمون اشتباه بزنی اینجا می‌آید.</div>`; return; }
+  const rows=keys.map(k=>{
+    const f=findWord(k); if(!f) return '';
+    return `<div class="misrow">
+      <span class="tag">روز ${f.day}</span>
+      <div class="r">${f.item.fa}</div>
+      <div class="l">${f.item.w}</div>
+    </div>`;
+  }).join('');
+  el.innerHTML = rows + `<div class="row" style="margin-top:12px;">
+    <button class="btn ok" id="misTrain">تمرین فلش‌کارت این لغات</button>
+    <button class="btn no" id="misClear">پاک کردن همه</button>
+  </div>`;
+  document.getElementById('misClear').onclick=()=>{ S.mistakes={}; saveState(); renderMistakes(); };
+  document.getElementById('misTrain').onclick=()=>{
+    const deck=keys.map(k=>findWord(k)).filter(Boolean).map(x=>x.item);
+    startMistakeDrill(deck);
+  };
+}
+function startMistakeDrill(deck){
+  goto('mistakes');
+  let order=shuf([...deck.keys()]), i=0, know=0, no=0;
+  const el=document.getElementById('misBody');
+  function draw(){
+    if(i>=order.length){
+      el.innerHTML=`<div class="empty">تمرین تمام شد — بلدم: ${know} · بلد نیستم: ${no}</div>
+        <div class="row"><button class="btn acc" id="mBack">بازگشت به لیست اشتباهات</button></div>`;
+      document.getElementById('mBack').onclick=renderMistakes; return;
+    }
+    const it=deck[order[i]];
+    el.innerHTML=`<div class="meta"><span>${i+1} / ${order.length}</span><span>بلدم: ${know}</span></div>
+      <div class="pbar"><div style="width:${i/order.length*100}%"></div></div>
+      <div class="card" id="mc">
+        <div class="front"><div class="w">${it.w}</div><div class="p">${it.p}</div><button class="spk" id="msp">🔊</button></div>
+        <div class="back"><div class="fa">${it.fa}</div>
+          <div class="kv"><b>Syn</b> — ${it.syn}</div><div class="kv"><b>Ant</b> — ${it.ant}</div>
+          <div class="ex">"${it.ex}"</div></div>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <button class="btn no" id="mno">✕ هنوز بلد نیستم</button>
+        <button class="btn ok" id="myes">✓ حالا بلدم</button>
+      </div>`;
+    const c=document.getElementById('mc');
+    c.onclick=e=>{ if(e.target.id!=='msp') c.classList.toggle('flip'); };
+    document.getElementById('msp').onclick=e=>{e.stopPropagation(); say(it.w,.85);};
+    document.getElementById('mno').onclick=()=>{no++;i++;draw();};
+    document.getElementById('myes').onclick=()=>{know++; delMis(it.w); i++; draw();};
+  }
+  draw();
+}
+
+/* ═══════════════ MAP ═══════════════ */
+function dayData(n){ return DAYS.find(d=>d.d===n)||null; }
+function renderMap(){
+  const g=document.getElementById('grid30'); g.innerHTML='';
+  for(let n=1;n<=TOTAL_DAYS;n++){
+    const cell=document.createElement('div');
+    const dd=dayData(n);
+    const done=!!S.completed[n];
+    const open=n<=S.unlocked;
+    cell.className='daycell'+(done?' done':'')+(!open?' locked':'')+(open&&!done?' current':'')+(n%7===0?' exam':'');
+    cell.innerHTML=`<div class="n">${n}</div><div class="s">${done?(S.scores[n]||0)+'%':(open?(dd?'شروع':'به‌زودی'):'🔒')}</div>`;
+    cell.onclick=()=>{
+      if(!open){ status(`روز ${n} قفل است — اول روز ${S.unlocked} را کامل کن`); return; }
+      if(!dd){ status(`محتوای روز ${n} هنوز اضافه نشده`); return; }
+      S.lastDay=n; saveState(true); goto('study');
+    };
+    g.appendChild(cell);
+  }
+  const avail=DAYS.length;
+  document.getElementById('mapNote').innerHTML =
+    `روز فعلی: <b>${S.unlocked}</b> · تکمیل‌شده: <b>${Object.keys(S.completed).length}</b> · اشتباهات فعال: <b>${Object.keys(S.mistakes).length}</b><br>
+     محتوای کامل موجود: روزهای ۱ تا ${avail} (${DAYS.reduce((a,d)=>a+d.words.length,0)} لغت). بقیه روزها در به‌روزرسانی بعدی.`;
+  document.getElementById('hdrSub').textContent=`روز ${S.unlocked} از ${TOTAL_DAYS} · ${Object.keys(S.mistakes).length} اشتباه فعال`;
+}
+
+/* ═══════════════ STUDY FLOW ═══════════════ */
+let step=0, curDay=1;
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+function reviewWords(n){
+  const prev=DAYS.filter(d=>d.d<n);
+  if(!prev.length) return [];
+  const pool=prev.flatMap(d=>d.words);
+  return shuf([...pool]).slice(0,5);
+}
+
+function renderStudy(){
+  curDay=S.lastDay;
+  if(curDay>S.unlocked) curDay=S.unlocked;
+  const dd=dayData(curDay);
+  document.getElementById('hdrTitle').textContent=`روز ${curDay} — ${dd?dd.cat:''}`;
+  if(!dd){ document.getElementById('studyBody').innerHTML=`<div class="empty">محتوای این روز هنوز اضافه نشده.</div>`; return; }
+  step=0; drawStep();
+}
+function setSteps(){
+  document.querySelectorAll('#stepbar div').forEach((d,i)=>{
+    d.classList.toggle('on', i===step);
+    d.classList.toggle('ok', i<step);
+  });
+}
+function drawStep(){
+  setSteps(); playerStop();
+  const dd=dayData(curDay);
+  const body=document.getElementById('studyBody');
+  if(step===0) return stepCards(dd,body);
+  if(step===1) return stepStory(dd,body);
+  if(step===2) return stepMatch(dd,body);
+  if(step===3) return stepMath(dd,body);
+  if(step===4) return stepQuiz(dd,body);
+}
+function nextStep(){ step++; drawStep(); window.scrollTo(0,0); }
+
+/* --- step 1: flashcards --- */
+function stepCards(dd, body){
+  const rev=reviewWords(curDay);
+  const deck=[...dd.words, ...rev];
+  let order=shuf([...deck.keys()]), i=0, know=0, no=0;
+  function draw(){
+    if(i>=order.length){
+      body.innerHTML=`<div class="result"><div class="pct">${know}</div>
+        <div class="msg">از ${order.length} لغت، ${know} تا رو بلد بودی.<br>${no} لغت به بخش اشتباهات اضافه شد.</div></div>
+        <div class="row" style="margin-top:12px;">
+          <button class="btn" id="again">↻ دوباره</button>
+          <button class="btn acc" id="nx">مرحله بعد: داستان ›</button></div>`;
+      document.getElementById('again').onclick=()=>{order=shuf([...deck.keys()]);i=0;know=0;no=0;draw();};
+      document.getElementById('nx').onclick=nextStep; return;
+    }
+    const it=deck[order[i]];
+    const isRev = i<order.length && rev.includes(it);
+    body.innerHTML=`
+      ${rev.length?`<div class="note">این مرحله شامل ${dd.words.length} لغت جدید + ${rev.length} لغت مرور از روزهای قبل است.</div>`:''}
+      <div class="meta"><span>${i+1} / ${order.length}${isRev?' · مرور':''}</span><span>بلدم ${know} · بلد نیستم ${no}</span></div>
+      <div class="pbar"><div style="width:${i/order.length*100}%"></div></div>
+      <div class="card" id="cd">
+        <div class="front"><div class="w">${it.w}</div><div class="p">${it.p}</div><button class="spk" id="sp">🔊</button></div>
+        <div class="back"><div class="fa">${it.fa}</div>
+          <div class="kv"><b>Syn</b> — ${it.syn}</div><div class="kv"><b>Ant</b> — ${it.ant}</div>
+          <div class="ex">"${it.ex}"</div></div>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <button class="btn no" id="bno">✕ بلد نیستم</button>
+        <button class="btn ok" id="byes">✓ بلدم</button>
+      </div>
+      <div class="row" style="margin-top:8px;"><button class="btn" id="skip">رد کردن این مرحله ›</button></div>`;
+    const c=document.getElementById('cd');
+    c.onclick=e=>{ if(e.target.id!=='sp') c.classList.toggle('flip'); };
+    document.getElementById('sp').onclick=e=>{e.stopPropagation(); say(it.w,.85);};
+    document.getElementById('bno').onclick=()=>{no++; addMis(it.w,curDay); i++; draw();};
+    document.getElementById('byes').onclick=()=>{know++; delMis(it.w); i++; draw();};
+    document.getElementById('skip').onclick=nextStep;
+    say(it.w,.85);
+  }
+  draw();
+}
+
+/* --- step 2: story with real player --- */
+function stepStory(dd, body){
+  const map={}; [...dd.words].forEach(x=>map[x.w.toLowerCase()]=x);
+  const paras=dd.story.split(/\n\n+/);
+  const html=paras.map(p=>'<p>'+p.replace(/[A-Za-z']+/g,m=>{
+    const c=m.toLowerCase();
+    return map[c]?`<span class="kw" data-w="${c}">${m}</span>`:m;
+  })+'</p>').join('');
+
+  body.innerHTML=`
+    <div class="player">
+      <div class="main">
+        <button id="btnPrev">⏮</button>
+        <button class="big" id="btnPlayPause">▶ پخش</button>
+        <button id="btnNext">⏭</button>
+        <button id="btnStop">■</button>
+      </div>
+      <div class="sub">
+        <span>سرعت</span>
+        <select id="selRate">
+          <option value="0.7">۰.۷× خیلی آهسته</option>
+          <option value="0.85">۰.۸۵× آهسته</option>
+          <option value="1" selected>۱× عادی</option>
+          <option value="1.15">۱.۱۵× سریع</option>
+        </select>
+        <label style="display:flex;gap:4px;align-items:center;cursor:pointer;">
+          <input type="checkbox" id="chkLoop"> پخش پیوسته (تکرار)
+        </label>
+      </div>
+      <div class="nowplaying" id="nowPlaying"></div>
+    </div>
+    <div class="note">روی هر لغت طلایی بزن تا فقط همان لغت خوانده شود — <b>پخش داستان از همان‌جا ادامه پیدا می‌کند</b> و از اول شروع نمی‌شود.</div>
+    <div class="storybox" id="sbox">${html}</div>
+    <div class="row" style="margin-top:12px;"><button class="btn acc" id="nx">مرحله بعد: تطبیق ›</button></div>`;
+
+  P.paras=[...document.querySelectorAll('#sbox p')].map(p=>({el:p,text:p.textContent}));
+  P.idx=0; P.playing=false; P.paused=false; P.rate=1; P.loop=false;
+
+  document.getElementById('btnPlayPause').onclick=()=>{
+    if(P.playing && !P.paused) playerPause();
+    else if(P.paused) playerResume();
+    else playerPlay();
+  };
+  document.getElementById('btnStop').onclick=playerStop;
+  document.getElementById('btnPrev').onclick=()=>playerJump(-1);
+  document.getElementById('btnNext').onclick=()=>playerJump(1);
+  document.getElementById('selRate').onchange=e=>{
+    P.rate=parseFloat(e.target.value);
+    if(P.playing&&!P.paused){ speechSynthesis.cancel(); playerSpeakPara(P.idx); }
+  };
+  document.getElementById('chkLoop').onchange=e=>P.loop=e.target.checked;
+
+  document.querySelectorAll('#sbox .kw').forEach(s=>{
+    s.onclick=()=>{
+      const it=map[s.dataset.w]; if(!it) return;
+      sayWordSafe(it.w);
+      s.classList.add('spk'); setTimeout(()=>s.classList.remove('spk'),900);
+      status(`${it.w} — ${it.fa}`);
+    };
+  });
+  document.getElementById('nx').onclick=nextStep;
+}
+
+/* --- step 3: match --- */
+function stepMatch(dd, body){
+  const rounds=[]; const sh=shuf([...dd.words]);
+  for(let i=0;i<sh.length;i+=6) rounds.push(sh.slice(i,i+6));
+  let r=0, score=0, hits=0;
+  function draw(){
+    const round=rounds[r];
+    body.innerHTML=`<div class="meta"><span>دور ${r+1} از ${rounds.length}</span><span>امتیاز ${score}</span></div>
+      <div class="mgrid"><div class="mcol" id="cw"></div><div class="mcol" id="cm"></div></div>
+      <div class="row" style="margin-top:12px;">
+        <button class="btn" id="rnext">دور بعد ›</button>
+        <button class="btn acc" id="nx">مرحله بعد: ریاضی ›</button></div>`;
+    const cw=document.getElementById('cw'), cm=document.getElementById('cm');
+    round.forEach(it=>{ const e=document.createElement('div'); e.className='mi w'; e.textContent=it.w; e.dataset.w=it.w; cw.appendChild(e); });
+    shuf([...round]).forEach(it=>{ const e=document.createElement('div'); e.className='mi'; e.textContent=it.fa; e.dataset.w=it.w; cm.appendChild(e); });
+    let sel=null; hits=0;
+    cw.querySelectorAll('.mi').forEach(e=>e.onclick=()=>{
+      if(e.classList.contains('hit'))return;
+      cw.querySelectorAll('.mi').forEach(x=>x.classList.remove('sel'));
+      e.classList.add('sel'); sel=e; say(e.dataset.w,.85);
+    });
+    cm.querySelectorAll('.mi').forEach(e=>e.onclick=()=>{
+      if(e.classList.contains('hit')||!sel)return;
+      const picked=sel; sel=null;
+      if(e.dataset.w===picked.dataset.w){
+        e.classList.add('hit'); picked.classList.add('hit'); score+=10; hits++;
+        delMis(picked.dataset.w);
+        if(hits===round.length){ setTimeout(()=>{ if(r<rounds.length-1){r++;draw();} else status('همه دورها تمام شد'); },500); }
+      }else{
+        addMis(picked.dataset.w,curDay);
+        e.classList.add('bad'); picked.classList.add('bad'); score=Math.max(0,score-2);
+        setTimeout(()=>{ e.classList.remove('bad'); picked.classList.remove('bad','sel'); },430);
+      }
+      document.querySelector('.meta').children[1].textContent='امتیاز '+score;
+    });
+    document.getElementById('rnext').onclick=()=>{ r=(r+1)%rounds.length; draw(); };
+    document.getElementById('nx').onclick=nextStep;
+  }
+  draw();
+}
+
+/* --- step 4: math lesson + practice --- */
+function stepMath(dd, body){
+  const m=dd.math;
+  body.innerHTML=`<div class="note"><b>${m.topic}</b><br>${m.lesson}</div>
+    <div id="mathQs"></div>
+    <div class="row" style="margin-top:12px;"><button class="btn acc" id="nx">مرحله بعد: آزمون روز ›</button></div>`;
+  const box=document.getElementById('mathQs');
+  m.qs.forEach((q,qi)=>{
+    const d=document.createElement('div'); d.className='q';
+    d.innerHTML=`<div class="qt"><span class="en">${q.q}</span></div>
+      <div class="opts">${q.o.map((o,i)=>`<div class="opt en" data-i="${i}"><span class="lt">${'ABCD'[i]}</span><span>${o}</span></div>`).join('')}</div>
+      <div class="qexp"><b>پاسخ:</b> ${q.o[q.a]} — ${q.e}</div>`;
+    box.appendChild(d);
+    d.querySelectorAll('.opt').forEach(o=>o.onclick=()=>{
+      if(d.dataset.done)return; d.dataset.done='1';
+      const pick=+o.dataset.i;
+      d.querySelectorAll('.opt')[q.a].classList.add('right');
+      if(pick!==q.a) o.classList.add('wrongpick');
+      d.querySelector('.qexp').classList.add('show');
+    });
+  });
+  document.getElementById('nx').onclick=nextStep;
+}
+
+/* --- step 5: graded quiz, unlocks next day --- */
+function buildQuiz(dd){
+  const qs=[];
+  const pool=[...dd.words];
+  const picks=shuf([...pool]).slice(0,8);
+  picks.forEach(it=>{
+    const wrong=shuf(pool.filter(x=>x.w!==it.w)).slice(0,3).map(x=>x.fa);
+    const opts=shuf([it.fa,...wrong]);
+    qs.push({type:'v', word:it.w, q:`معنی <span class="en">${it.w}</span> کدام است؟`, o:opts, a:opts.indexOf(it.fa), e:`${it.w} = ${it.fa} · syn: ${it.syn}`});
+  });
+  const syn=shuf([...pool]).slice(0,3);
+  syn.forEach(it=>{
+    const wrong=shuf(pool.filter(x=>x.w!==it.w)).slice(0,3).map(x=>x.syn);
+    const opts=shuf([it.syn,...wrong]);
+    qs.push({type:'v', word:it.w, q:`مترادف <span class="en">${it.w}</span> کدام است؟`, o:opts, a:opts.indexOf(it.syn), e:`${it.w} ≈ ${it.syn}`, en:true});
+  });
+  const rev=reviewWords(dd.d).slice(0,2);
+  rev.forEach(it=>{
+    const others=DAYS.flatMap(d=>d.words).filter(x=>x.w!==it.w);
+    const wrong=shuf(others).slice(0,3).map(x=>x.fa);
+    const opts=shuf([it.fa,...wrong]);
+    qs.push({type:'v', word:it.w, q:`(مرور) معنی <span class="en">${it.w}</span> کدام است؟`, o:opts, a:opts.indexOf(it.fa), e:`${it.w} = ${it.fa}`});
+  });
+  shuf([...dd.math.qs]).slice(0,3).forEach(q=>{
+    qs.push({type:'m', q:`<span class="en">${q.q}</span>`, o:q.o, a:q.a, e:q.e, en:true});
+  });
+  return shuf(qs);
+}
+
+function stepQuiz(dd, body){
+  const qs=buildQuiz(dd);
+  const PASS=80;
+  body.innerHTML=`<div class="note">آزمون روز ${dd.d} — ${qs.length} سوال (واژگان + مرور + ریاضی).<br>
+    برای باز شدن روز بعد باید حداقل <b>${PASS}٪</b> بگیری. لغات اشتباه خودکار ثبت می‌شوند.</div>
+    <div id="qBox"></div>
+    <div class="row" style="margin-top:12px;"><button class="btn acc" id="submitQ">تصحیح و ثبت نتیجه</button></div>
+    <div id="qResult" style="margin-top:12px;"></div>`;
+  const box=document.getElementById('qBox');
+  const answers=new Array(qs.length).fill(null);
+  qs.forEach((q,qi)=>{
+    const d=document.createElement('div'); d.className='q';
+    d.innerHTML=`<div class="qt">${qi+1}. ${q.q}</div>
+      <div class="opts">${q.o.map((o,i)=>`<div class="opt${q.en?' en':''}" data-i="${i}"><span class="lt">${'ABCD'[i]}</span><span>${o}</span></div>`).join('')}</div>
+      <div class="qexp"><b>پاسخ صحیح:</b> ${q.o[q.a]} — ${q.e}</div>`;
+    box.appendChild(d);
+    d.querySelectorAll('.opt').forEach(o=>o.onclick=()=>{
+      if(d.dataset.locked)return;
+      d.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));
+      o.classList.add('sel'); answers[qi]=+o.dataset.i;
+    });
+  });
+
+  document.getElementById('submitQ').onclick=()=>{
+    if(answers.includes(null)){ status('همه سوالات را پاسخ بده'); return; }
+    let correct=0;
+    qs.forEach((q,qi)=>{
+      const d=box.children[qi]; d.dataset.locked='1';
+      const opts=d.querySelectorAll('.opt');
+      opts[q.a].classList.add('right');
+      if(answers[qi]===q.a){ correct++; if(q.word) delMis(q.word); }
+      else{ opts[answers[qi]].classList.add('wrongpick'); if(q.word) addMis(q.word,dd.d); }
+      d.querySelector('.qexp').classList.add('show');
+    });
+    const pct=Math.round(correct/qs.length*100);
+    const pass=pct>=PASS;
+    S.scores[dd.d]=pct;
+    if(pass){
+      S.completed[dd.d]=true;
+      if(S.unlocked===dd.d && dd.d<TOTAL_DAYS){ S.unlocked=dd.d+1; S.lastDay=dd.d+1; }
+    }
+    saveState();
+    document.getElementById('qResult').innerHTML=`
+      <div class="result ${pass?'pass':'fail'}">
+        <div class="pct">${pct}%</div>
+        <div class="msg">${correct} از ${qs.length} پاسخ درست<br><br>
+        ${pass?`✓ قبول شدی — <b>روز ${Math.min(dd.d+1,TOTAL_DAYS)} باز شد</b>`:`زیر ${PASS}٪ — روز بعد هنوز قفل است. اشتباهاتت را تمرین کن و دوباره امتحان بده.`}</div>
+        <div class="row">
+          ${pass?`<button class="btn ok" id="goNextDay">شروع روز ${Math.min(dd.d+1,TOTAL_DAYS)} ›</button>`:`<button class="btn no" id="retry">آزمون مجدد</button>`}
+          <button class="btn" id="goMis">مرور اشتباهات</button>
+        </div>
+      </div>`;
+    if(pass) document.getElementById('goNextDay').onclick=()=>{ S.lastDay=Math.min(dd.d+1,TOTAL_DAYS); saveState(true); renderStudy(); window.scrollTo(0,0); };
+    else document.getElementById('retry').onclick=()=>stepQuiz(dd,body);
+    document.getElementById('goMis').onclick=()=>goto('mistakes');
+    renderMap();
+    document.getElementById('qResult').scrollIntoView({behavior:'smooth'});
+  };
+}
+
+/* ═══════════════ REFERENCE ═══════════════ */
+let refFilter='all';
+document.querySelectorAll('#refFilter button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#refFilter button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); refFilter=b.dataset.f; renderRef();
+});
+document.getElementById('refSearch').addEventListener('input',renderRef);
+
+function renderRef(){
+  const q=document.getElementById('refSearch').value.trim().toLowerCase();
+  const el=document.getElementById('refBody');
+  if(refFilter==='math'){
+    el.innerHTML='<div class="mathref">'+MATH_REF.map(g=>
+      `<h3>${g.t}</h3><table>${g.rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table>`
+    ).join('')+'</div>';
+    return;
+  }
+  let list=[];
+  DAYS.forEach(d=>d.words.forEach(w=>list.push({...w,day:d.d})));
+  if(refFilter==='unlocked') list=list.filter(x=>x.day<=S.unlocked);
+  if(refFilter==='mistakes') list=list.filter(x=>S.mistakes[x.w]);
+  if(q) list=list.filter(x=>x.w.toLowerCase().includes(q)||x.fa.includes(q)||x.syn.includes(q));
+  list.sort((a,b)=>a.w.localeCompare(b.w));
+  if(!list.length){ el.innerHTML='<div class="empty">موردی پیدا نشد.</div>'; return; }
+  el.innerHTML=list.map(x=>`
+    <div class="refitem">
+      <div class="top"><span class="w">${x.w}</span><span class="dayno">روز ${x.day}</span></div>
+      <div class="p">${x.p}</div>
+      <div class="fa">${x.fa}</div>
+      <div class="kv"><b>Syn</b> ${x.syn} &nbsp;·&nbsp; <b>Ant</b> ${x.ant}</div>
+      <div class="ex">"${x.ex}"</div>
+      <button class="refspk" data-w="${x.w}">🔊 تلفظ</button>
+    </div>`).join('');
+  el.querySelectorAll('.refspk').forEach(b=>b.onclick=()=>say(b.dataset.w,.85));
+}
+
+/* ═══════════════ BACKUP CODE ═══════════════ */
+const modal=document.getElementById('modal');
+function showModal(title,text,val,onOk){
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('modalText').textContent=text;
+  document.getElementById('modalArea').value=val||'';
+  modal.classList.add('show');
+  document.getElementById('modalOk').onclick=()=>{ onOk&&onOk(document.getElementById('modalArea').value); modal.classList.remove('show'); };
+}
+document.getElementById('modalCancel').onclick=()=>modal.classList.remove('show');
+document.getElementById('btnSave').onclick=()=>saveState();
+document.getElementById('btnExport').onclick=()=>{
+  showModal('کد پشتیبان','این متن را کپی و جایی ذخیره کن. هر وقت پیشرفتت پاک شد، با دکمه بازیابی برش گردان.',btoa(unescape(encodeURIComponent(JSON.stringify(S)))));
+};
+document.getElementById('btnImport').onclick=()=>{
+  showModal('بازیابی با کد','کد پشتیبان را اینجا بچسبان و تایید بزن.','',(v)=>{
+    try{
+      S=Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE)),JSON.parse(decodeURIComponent(escape(atob(v.trim())))));
+      saveState(); renderAll(); status('بازیابی شد ✓');
+    }catch(e){ status('کد نامعتبر است'); }
+  });
+};
+
+/* ═══════════════ INIT ═══════════════ */
+function renderAll(){ updBdg(); renderMap(); renderRef(); }
+loadState();
+setInterval(()=>saveState(true), 25000);
+window.addEventListener('pagehide',()=>saveState(true));
+</script>
+</body>
+</html>
